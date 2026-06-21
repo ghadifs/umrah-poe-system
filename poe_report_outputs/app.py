@@ -831,12 +831,41 @@ def admin_dashboard_page():
     st.divider()
 
     st.markdown("## فلتر الفترة")
-    filter_col1, filter_col2 = st.columns(2)
-    with filter_col1:
-        dashboard_start = st.date_input("الفترة من", value=date.today(), key="dashboard_period_start")
-    with filter_col2:
-        dashboard_end = st.date_input("الفترة إلى", value=date.today(), key="dashboard_period_end")
 
+# تحديد أول وآخر تاريخ موجود فعلياً في البيانات
+all_dates = []
+
+for df in sheets.values():
+    if not df.empty and "تاريخ إعداد التقرير" in df.columns:
+        temp_dates = pd.to_datetime(
+            df["تاريخ إعداد التقرير"],
+            errors="coerce"
+        ).dt.date.dropna().tolist()
+
+        all_dates.extend(temp_dates)
+
+if all_dates:
+    default_start = min(all_dates)
+    default_end = max(all_dates)
+else:
+    default_start = date.today()
+    default_end = date.today()
+
+filter_col1, filter_col2 = st.columns(2)
+
+with filter_col1:
+    dashboard_start = st.date_input(
+        "الفترة من",
+        value=default_start,
+        key="dashboard_period_start"
+    )
+
+with filter_col2:
+    dashboard_end = st.date_input(
+        "الفترة إلى",
+        value=default_end,
+        key="dashboard_period_end"
+    )
     if dashboard_start > dashboard_end:
         st.error("تاريخ بداية الفترة يجب أن يكون قبل أو يساوي تاريخ نهاية الفترة.")
         st.stop()
